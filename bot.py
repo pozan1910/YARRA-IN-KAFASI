@@ -37,7 +37,8 @@ YTDL_OPTIONS = {
     'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0',
-    'cookiesfrombrowser': ('chrome',),  # Bilgisayar için tarayıcıdan çerez okuma (bulutta çalıştıracaksanız bunu silip 'cookiefile': 'cookies.txt' yapabilirsiniz)
+    'cookiefile': 'cookies.txt',  # <-- Bulut sunucular için çerez dosyasını okuma ayarı
+}
 }
 
 FFMPEG_OPTIONS = {
