@@ -24,9 +24,7 @@ user_spam_counter = {}
 
 # ---------- YTDL & FFMPEG AYARLARI ----------
 YTDL_OPTIONS = {
-    'format': 'ba',
-    'extractaudio': True,
-    'audioformat': 'mp3',
+    'format': 'bestaudio/best',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
     'noplaylist': True,
