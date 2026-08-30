@@ -24,7 +24,7 @@ user_spam_counter = {}
 
 # ---------- YTDL & FFMPEG AYARLARI ----------
 YTDL_OPTIONS = {
-    'format': 'bestaudio',
+    'format': 'bestaudio/best',
     'extractaudio': True,
     'audioformat': 'mp3',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
@@ -40,7 +40,7 @@ YTDL_OPTIONS = {
     'cookiefile': 'cookies.txt',  # Güncel cookies.txt dosyanız doğrudan buradan okunacaktır
     'extractor_args': {
         'youtube': {
-            'player_client': ['android', 'web']
+            'player_client': ['mweb', 'android', 'web']
         }
     },
 }
