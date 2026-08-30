@@ -4,7 +4,7 @@ import yt_dlp
 import asyncio
 
 # ---------- BOT AYARLARI ----------
-TOKEN = "MTU0MzM3NTI1OTU4MjA3ODk5Ng.G0QcLJ.nc4FRXHFtcUtAQeGVvvgFG6H8hMC420gonAiyM"
+TOKEN = "MTU0MzM3NTI1OTU4MjA3ODk5Ng.G50aff.lgndMFeFABKMbJQ36eevVV1r5bnOWV05WsFDu4"
 PREFIX = "!"
 
 # FFmpeg yolunuzu ayarlayın
@@ -539,4 +539,4 @@ async def stop(ctx):
         await ctx.reply("❌ Bot zaten bir ses kanalında değil.")
 
 
-bot.run("MTU0MzM3NTI1OTU4MjA3ODk5Ng.G0QcLJ.nc4FRXHFtcUtAQeGVvvgFG6H8hMC420gonAiyM")
+bot.run("MTU0MzM3NTI1OTU4MjA3ODk5Ng.G50aff.lgndMFeFABKMbJQ36eevVV1r5bnOWV05WsFDu4")
