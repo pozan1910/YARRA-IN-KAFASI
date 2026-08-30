@@ -2,9 +2,10 @@ import discord
 from discord.ext import commands
 import yt_dlp
 import asyncio
+import os
 
 # ---------- BOT AYARLARI ----------
-TOKEN = "MTU0MzM3NTI1OTU4MjA3ODk5Ng.GtWNK3.ekb0X4UPNPKCCZS55RpB1Vx5WG-hS_WFUVEqNw"
+TOKEN = os.getenv("DISCORD_TOKEN")
 PREFIX = "!"
 
 # FFmpeg yolunuzu ayarlayın
@@ -36,6 +37,7 @@ YTDL_OPTIONS = {
     'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0',
+    'cookiesfrombrowser': ('chrome',),  # Bilgisayar için tarayıcıdan çerez okuma (bulutta çalıştıracaksanız bunu silip 'cookiefile': 'cookies.txt' yapabilirsiniz)
 }
 
 FFMPEG_OPTIONS = {
@@ -175,7 +177,6 @@ async def on_member_join(member):
             await member.add_roles(otomatik_rol, reason="Otomatik Rol Verme (Yeni Üye)")
             print(f"✅ [OTO ROL] {member.name} kullanıcısına '{otomatik_rol.name}' rolü verildi.")
             
-            # Opsiyonel: cmd kanalına bilgi bildirimi
             cmd_kanali = discord.utils.get(member.guild.text_channels, name="cmd")
             if cmd_kanali and cmd_kanali.permissions_for(member.guild.me).send_messages:
                 embed = discord.Embed(
@@ -539,5 +540,4 @@ async def stop(ctx):
         await ctx.reply("❌ Bot zaten bir ses kanalında değil.")
 
 
-import os
-bot.run(os.getenv("DISCORD_TOKEN"))
+bot.run(TOKEN)
