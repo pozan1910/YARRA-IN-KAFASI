@@ -4,7 +4,7 @@ import yt_dlp
 import asyncio
 
 # ---------- BOT AYARLARI ----------
-TOKEN = "MTU0MzM3NTI1OTU4MjA3ODk5Ng.G50aff.lgndMFeFABKMbJQ36eevVV1r5bnOWV05WsFDu4"
+TOKEN = "MTU0MzM3NTI1OTU4MjA3ODk5Ng.GvyDML.OBn8njRgs9qzsx-Y-WwVOWCSwMV4QVRjGpZfAA"
 PREFIX = "!"
 
 # FFmpeg yolunuzu ayarlayın
