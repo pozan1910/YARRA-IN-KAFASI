@@ -23,7 +23,7 @@ bot = commands.Bot(command_prefix=PREFIX, intents=intents, help_command=None)
 user_spam_counter = {}
 
 # ---------- YTDL & FFMPEG AYARLARI ----------
-YTDL_OPTIONS = {
+YYTDL_OPTIONS = {
     'format': 'bestaudio/best',
     'extractaudio': True,
     'audioformat': 'mp3',
@@ -37,7 +37,8 @@ YTDL_OPTIONS = {
     'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0',
-    'cookiefile': 'cookies.txt',  # <-- Bulut sunucular için çerez dosyasını okuma ayarı
+    'cookiefile': 'cookies.txt',  # Tarayıcı yerine sunucuya yüklediğiniz cookies.txt dosyasını okur
+}
 }
 }
 
