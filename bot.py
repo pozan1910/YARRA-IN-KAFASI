@@ -73,9 +73,66 @@ class YTDLSource(discord.PCMVolumeTransformer):
         filename = data['url'] if stream else ytdl.prepare_filename(data)
         return cls(discord.FFmpegPCMAudio(filename, executable=FFMPEG_PATH, **FFMPEG_OPTIONS), data=data)
 
+
+# ==================== TICKET SİSTEMİ VIEW SINIFLARI ====================
+
+class TicketCloseView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Talebi Kapat", style=discord.ButtonStyle.danger, emoji="🔒", custom_id="close_ticket_button")
+    async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Destek talebi kapatılıyor...", ephemeral=True)
+        await interaction.channel.delete()
+
+
+class TicketView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="OPEN", style=discord.ButtonStyle.secondary, emoji="🎫", custom_id="open_ticket_button")
+    async def open_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        guild = interaction.guild
+        member = interaction.user
+
+        # Kullanıcının zaten açık bir ticket kanalı var mı kontrolü
+        existing_channel = discord.utils.get(guild.text_channels, name=f"ticket-{member.name.lower()}")
+        if existing_channel:
+            await interaction.response.send_message(f"Zaten açık bir destek talebiniz bulunuyor: {existing_channel.mention}", ephemeral=True)
+            return
+
+        # Yetkiler: Sadece bot, yetkililer ve ticket'ı açan kullanıcı görebilsin
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(view_channel=False),
+            member: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True),
+        }
+
+        # Ticket kanalını oluştur
+        ticket_channel = await guild.create_text_channel(
+            name=f"ticket-{member.name}",
+            overwrites=overwrites,
+            topic=f"Destek talebi sahibi: {member.mention}"
+        )
+
+        await interaction.response.send_message(f"Destek talebiniz oluşturuldu: {ticket_channel.mention}", ephemeral=True)
+
+        # Ticket kanalının içine gönderilecek mesaj ve kapatma butonu
+        close_view = TicketCloseView()
+        
+        embed = discord.Embed(
+            title="VNT SUPPORT",
+            description="Destek talebiniz başarıyla açıldı. Lütfen yetkililerin sizinle ilgilenmesini bekleyin.",
+            color=0x2b2d31
+        )
+        await ticket_channel.send(f"{member.mention} hoş geldin!", embed=embed, view=close_view)
+
+
 @bot.event
 async def on_ready():
     print(f"✅ {bot.user} aktif ve tüm sistemler yüklendi!")
+    # Ticket butonlarının kalıcı (persistent) kalması için view'ları ekliyoruz
+    bot.add_view(TicketView())
+    bot.add_view(TicketCloseView())
 
 
 # ==================== SPAM KORUMASI ====================
@@ -179,7 +236,27 @@ async def gella_komutu(ctx):
         await ctx.voice_client.move_to(hedef_kanal)
 
 
-# ==================== YÖNETİM KOMUTLARI ====================
+# ==================== YÖNETİM & TICKET KOMUTLARI ====================
+
+@bot.command(name="TICKETKUR", aliases=["ticketkur"])
+@commands.has_permissions(administrator=True)
+async def ticketkur_komutu(ctx):
+    embed = discord.Embed(
+        title="VNT SUPPORT !",
+        description="you need help? OPEN TICKET",
+        color=0x111111
+    )
+    # Gönderdiğin görselin URL'si embed içerisine eklendi
+    embed.set_image(url="https://cdn.discordapp.com/attachments/1541904408407711747/1543372318363885678/ChatGPT_Image_30_Agu_2026_00_30_00.png?ex=6a9549bb&is=6a93f83b&hm=a9075766b9f0ff4b1a17a75f165087f2273690037efe6ab44a7ee65e02828406&")
+    embed.set_footer(text="VNT TICKET SYSTEM")
+
+    view = TicketView()
+    await ctx.send(embed=embed, view=view)
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
 
 @bot.command(name="CLEAR", aliases=["clear", "sil", "clean"])
 async def clear_komutu(ctx):
