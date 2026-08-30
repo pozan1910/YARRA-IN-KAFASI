@@ -539,6 +539,4 @@ async def stop(ctx):
         await ctx.reply("❌ Bot zaten bir ses kanalında değil.")
 
 
-import os
-
-bot.run(os.getenv("DISCORD_TOKEN"))
+bot.run("MTU0MzM3NTI1OTU4MjA3ODk5Ng.GvyDML.OBn8njRgs9qzsx-Y-WwVOWCSwMV4QVRjGpZfAA")
