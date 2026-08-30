@@ -15,7 +15,7 @@ FFMPEG_PATH = r"C:\ffmpeg\bin\ffmpeg.exe"
 intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
-intents.members = True
+intents.members = True # Üye isimlerini değiştirmek ve takip etmek için bu intent şarttır!
 
 bot = commands.Bot(command_prefix=PREFIX, intents=intents, help_command=None)
 
@@ -95,19 +95,16 @@ class TicketView(discord.ui.View):
         guild = interaction.guild
         member = interaction.user
 
-        # Kullanıcının zaten açık bir ticket kanalı var mı kontrolü
         existing_channel = discord.utils.get(guild.text_channels, name=f"ticket-{member.name.lower()}")
         if existing_channel:
             await interaction.response.send_message(f"Zaten açık bir destek talebiniz bulunuyor: {existing_channel.mention}", ephemeral=True)
             return
 
-        # Yetkiler: Sadece bot, yetkililer ve ticket'ı açan kullanıcı görebilsin
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(view_channel=False),
             member: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True),
         }
 
-        # Ticket kanalını oluştur
         ticket_channel = await guild.create_text_channel(
             name=f"ticket-{member.name}",
             overwrites=overwrites,
@@ -116,7 +113,6 @@ class TicketView(discord.ui.View):
 
         await interaction.response.send_message(f"Destek talebiniz oluşturuldu: {ticket_channel.mention}", ephemeral=True)
 
-        # Ticket kanalının içine gönderilecek mesaj ve kapatma butonu
         close_view = TicketCloseView()
         
         embed = discord.Embed(
@@ -130,7 +126,6 @@ class TicketView(discord.ui.View):
 @bot.event
 async def on_ready():
     print(f"✅ {bot.user} aktif ve tüm sistemler yüklendi!")
-    # Ticket butonlarının kalıcı (persistent) kalması için view'ları ekliyoruz
     bot.add_view(TicketView())
     bot.add_view(TicketCloseView())
 
@@ -171,9 +166,8 @@ async def on_message(message):
 
                 try:
                     deleted = await message.channel.purge(limit=20, check=is_spam_author)
-                    deleted_count = len(deleted)
                 except:
-                    deleted_count = 0
+                    pass
 
                 await message.channel.send(
                     f"⚠️ {message.author.mention}, spam yaptığın için 1 dakika susturuldun!", 
@@ -185,21 +179,33 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-# ==================== KORUMA SİSTEMİ & OTO ROL ====================
+# ==================== KORUMA, OTO ROL & VNT TAG SİSTEMİ ====================
 
 @bot.event
 async def on_member_join(member):
-    if member.bot and member != bot.user:
-        try:
-            await member.kick(reason="Anti-Bot Koruması")
-        except:
-            pass
+    # Bot koruması
+    if member.bot:
+        if member != bot.user:
+            try:
+                await member.kick(reason="Anti-Bot Koruması")
+            except:
+                pass
         return
 
+    # Otomatik Rol
     otomatik_rol = discord.utils.get(member.guild.roles, name="VNT pub")
     if otomatik_rol:
         try:
             await member.add_roles(otomatik_rol, reason="Yeni Üye Otomatik Rol")
+        except:
+            pass
+
+    # Yeni gelen üyenin isminde zaten "VNT " yoksa ve yöneticisi değilse tag ekle
+    if not member.guild_permissions.administrator:
+        try:
+            yeni_isim = f"VNT {member.display_name}"
+            if len(yeni_isim) <= 32:  # Discord isim sınırlandırması (max 32 karakter)
+                await member.edit(nick=yeni_isim, reason="Oto VNT Tag Sistemi")
         except:
             pass
 
@@ -238,6 +244,32 @@ async def gella_komutu(ctx):
 
 # ==================== YÖNETİM & TICKET KOMUTLARI ====================
 
+@bot.command(name="VNTAG", aliases=["vnttag"])
+@commands.has_permissions(administrator=True)
+async def vnttag_komutu(ctx):
+    """Sunucudaki mevcut yöneticiler hariç herkesin isminin başına VNT ekler."""
+    await ctx.send("⏳ Mevcut üyelerin isimleri güncelleniyor, lütfen bekleyin...")
+    sayac = 0
+    
+    for member in ctx.guild.members:
+        # Botları ve yönetici yetkisi olanları es geç
+        if member.bot or member.guild_permissions.administrator:
+            continue
+        
+        # Zaten isminde VNT varsa tekrar eklemesin
+        if not member.display_name.startswith("VNT "):
+            try:
+                yeni_isim = f"VNT {member.display_name}"
+                if len(yeni_isim) <= 32:
+                    await member.edit(nick=yeni_isim, reason="Toplu VNT Tag Dağıtımı")
+                    sayac += 1
+                    await asyncio.sleep(0.5) # Discord API rate limit'e (aşırı istek hatasına) takılmamak için gecikme
+            except:
+                pass
+                
+    await ctx.send(f"✅ İşlem tamamlandı! Toplam **{sayac}** kişinin ismine VNT eklendi.")
+
+
 @bot.command(name="TICKETKUR", aliases=["ticketkur"])
 @commands.has_permissions(administrator=True)
 async def ticketkur_komutu(ctx):
@@ -246,7 +278,6 @@ async def ticketkur_komutu(ctx):
         description="you need help? OPEN TICKET",
         color=0x111111
     )
-    # Gönderdiğin görselin URL'si embed içerisine eklendi
     embed.set_image(url="https://cdn.discordapp.com/attachments/1541904408407711747/1543372318363885678/ChatGPT_Image_30_Agu_2026_00_30_00.png?ex=6a9549bb&is=6a93f83b&hm=a9075766b9f0ff4b1a17a75f165087f2273690037efe6ab44a7ee65e02828406&")
     embed.set_footer(text="VNT TICKET SYSTEM")
 
@@ -352,7 +383,7 @@ async def stop(ctx):
         await ctx.voice_client.disconnect()
         await ctx.reply("⏹️ Müzik durduruldu.")
     else:
-        await ctx.reply("❌ Bot zaten bir ses kanalında değil.")
+        await ctx.reply("❌ Botun bir ses kanalında olması gerekiyor.")
 
 
 bot.run(TOKEN)
