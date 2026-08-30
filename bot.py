@@ -183,13 +183,8 @@ async def on_message(message):
 
 @bot.event
 async def on_member_join(member):
-    # Bot koruması
+    # Botlar sunucuya katıldığında otomatik kicklenmesi engellendi (Artık bot ekleyebilirsiniz)
     if member.bot:
-        if member != bot.user:
-            try:
-                await member.kick(reason="Anti-Bot Koruması")
-            except:
-                pass
         return
 
     # Otomatik Rol
