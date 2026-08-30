@@ -541,4 +541,4 @@ async def stop(ctx):
 
 import os
 
-bot.run(os.getenv("MTU0MzM3NTI1OTU4MjA3ODk5Ng.G50aff.lgndMFeFABKMbJQ36eevVV1r5bnOWV05WsFDu4"))
+bot.run(os.getenv("DISCORD_TOKEN"))
