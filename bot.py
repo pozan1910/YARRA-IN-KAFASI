@@ -8,10 +8,10 @@ import os
 TOKEN = os.getenv("DISCORD_TOKEN")
 PREFIX = "!"
 
-# FFmpeg yolunuzu ayarlayın
+# FFmpeg yolunuzu ayarlayın (Eğer bulut sunucudaysanız ve sistem PATH'indeyse sadece "ffmpeg" yazabilirsiniz, lokalde ise tam yol kalabilir)
 FFMPEG_PATH = r"C:\ffmpeg\bin\ffmpeg.exe"
 
-# Intent Ayarları (Rol verme için members=True şarttır)
+# Intent Ayarları (Rol verme ve üye takibi için members=True şarttır)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
@@ -37,7 +37,8 @@ YTDL_OPTIONS = {
     'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0',
-    'cookiefile': 'cookies.txt',  # Bulut sunucularda çerez hatası almamak için cookies.txt dosyası kullanılır
+    'cookiefile': 'cookies.txt',  # YouTube çerez dosyası
+    'extractor_args': {'youtube': {'player_client': ['android']}},  # YouTube bot engellerini aşmak için Android istemci simülasyonu
 }
 
 FFMPEG_OPTIONS = {
