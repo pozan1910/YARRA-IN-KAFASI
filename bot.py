@@ -2,9 +2,10 @@ import discord
 from discord.ext import commands
 import yt_dlp
 import asyncio
+import os
 
 # ---------- BOT AYARLARI ----------
-TOKEN = "MTU0MzM3NTI1OTU4MjA3ODk5Ng.GtWNK3.ekb0X4UPNPKCCZS55RpB1Vx5WG-hS_WFUVEqNw"
+TOKEN = os.getenv("DISCORD_TOKEN")
 PREFIX = "!"
 
 # FFmpeg yolunuzu ayarlayın
@@ -539,4 +540,4 @@ async def stop(ctx):
         await ctx.reply("❌ Bot zaten bir ses kanalında değil.")
 
 
-bot.run("MTU0MzM3NTI1OTU4MjA3ODk5Ng.GtWNK3.ekb0X4UPNPKCCZS55RpB1Vx5WG-hS_WFUVEqNw")
+bot.run(TOKEN)
