@@ -590,7 +590,7 @@ async def play(ctx, *, search: str):
     if ctx.voice_client is None:
         await channel.connect()
     elif ctx.voice_client.channel != channel:
-        await ctx.voice_client.move_play = await ctx.voice_client.move_to(channel) # type: ignore
+        await ctx.voice_client.move_to(channel)
 
     async with ctx.typing():
         try:
