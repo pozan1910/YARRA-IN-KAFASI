@@ -135,7 +135,6 @@ async def on_ready():
 class WipeGorevView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-        # Görevleri seçen kullanıcı ID'lerini tutan listeler
         self.builder_users = []
         self.farmer_users = []
         self.roamer_users = []
@@ -188,7 +187,7 @@ class WipeGorevView(discord.ui.View):
             await interaction.response.send_message("❌ Builder görevinden ayrıldın.", ephemeral=True)
         else:
             if len(self.builder_users) >= 2:
-                await interaction.2response.send_message("❌ Builder kadrosu dolu (Max 2 kişi)!", ephemeral=True)
+                await interaction.response.send_message("❌ Builder kadrosu dolu (Max 2 kişi)!", ephemeral=True)
                 return
             if self.user_has_role(uid):
                 await interaction.response.send_message("❌ Zaten başka bir görev seçmişsin! Öncekini bırakmalısın.", ephemeral=True)
@@ -197,7 +196,7 @@ class WipeGorevView(discord.ui.View):
             await interaction.response.send_message("✅ Builder görevini seçtin!", ephemeral=True)
         
         self.update_labels()
-        await interaction.message.edit(view=self, embed=interaction.message.embeds[0].from_dict(interaction.message.embeds[0].to_dict()) if False else interaction.message.embeds[0])
+        await interaction.message.edit(view=self)
 
     @discord.ui.button(label="Farmer (0)", style=discord.ButtonStyle.success, custom_id="gorev_farmer")
     async def farmer_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -273,10 +272,7 @@ class WipeGorevView(discord.ui.View):
         await interaction.message.edit(view=self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        # Mesajı güncelleyen buton tıklamalarından sonra embed içeriğini de güncelleyelim
-        # (Butona basıldığında embed içindeki isim listeleri anlık güncellensin diye)
         guild_name = interaction.guild.name
-        # Bu kısımdaki tarih verilerini view içinde tutabiliriz ya da dinamik güncelleyebiliriz:
         b_list = ", ".join([f"<@{uid}>" for uid in self.builder_users]) or "Seçen yok"
         f_list = ", ".join([f"<@{uid}>" for uid in self.farmer_users]) or "Seçen yok"
         r_list = ", ".join([f"<@{uid}>" for uid in self.roamer_users]) or "Seçen yok"
@@ -284,7 +280,6 @@ class WipeGorevView(discord.ui.View):
         en_list = ", ".join([f"<@{uid}>" for uid in self.endustriyel_users]) or "Seçen yok"
 
         old_embed = interaction.message.embeds[0]
-        # Eski embed description'ından tarih kısmını korumak için satırları parçalayabiliriz
         lines = old_embed.description.split("\n")
         tarih_satir = lines[2] if len(lines) > 2 else ""
         duyuru_satir = lines[4] if len(lines) > 4 else ""
@@ -489,14 +484,12 @@ async def dmgonder_komutu(ctx, *, duyuru_metni: str = "MAZARETLİ KABUL EDİLMİ
     basarili = 0
     basarisiz = 0
     sabit_logo_url = "https://cdn.discordapp.com/attachments/1541904408407711747/1546891550431383632/ds.png?ex=6aa16e85&is=6aa01d05&hm=6c35314200b13fc734a0bf41cfb48313f452620b546d28cc312d566e5af92952&"
-    kanal_etiket = "<#1543368885569323098>"
 
     for member in ctx.guild.members:
         if member.bot:
             continue
         
         try:
-            # Her kullanıcıya özel görev seçimi paneli oluşturulur
             view = WipeGorevView()
             embed = view.get_embed(tarih_str, saat_str, duyuru_metni, ctx.guild.name)
             embed.set_footer(text=f"{ctx.author.display_name} • Duyuru")
