@@ -175,8 +175,6 @@ class WipeGorevView(discord.ui.View):
         )
         embed = discord.Embed(description=desc, color=0x2b2d31)
         embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1541904408407711747/1546891550431383632/ds.png?ex=6aa16e85&is=6aa01d05&hm=6c35314200b13fc734a0bf41cfb48313f452620b546d28cc312d566e5af92952&")
-        if self.author_display:
-            embed.set_footer(text=f"{self.author_display} • Duyuru")
         return embed
 
     def user_has_role(self, uid):
@@ -437,7 +435,7 @@ async def ticketkur_komutu(ctx):
         pass
 
 
-# ==================== DUYURU & GÖREV SİSTEMİ (DM + KANAL) ====================
+# ==================== DUYURU & GÖREV SİSTEMİ ====================
 
 @bot.command(name="DMGÖNDER", aliases=["dmgonder", "dm"])
 @commands.has_permissions(administrator=True)
@@ -471,19 +469,21 @@ async def dmgonder_komutu(ctx, *, duyuru_metni: str = "MAZARETLİ KABUL EDİLMİ
         await ctx.send(f"❌ Belirtilen ID (`{hedef_kanal_id}`) ile kanal bulunamadı!")
         return
 
-    # 1. Rol seçme mesajını WIPE kanalına butonlarla gönder
+    # 1. WIPE kanalına sadece butonlu ve görev dağılımlı embed gönderilir
     view = WipeGorevView(tarih_str=tarih_str, saat_str=saat_str, duyuru_metni=duyuru_metni, author_display=ctx.author.display_name)
     embed = view.get_embed(ctx.guild.name)
-
     await kanal.send(embed=embed, view=view)
 
-    # 2. Duyuru metnini komutu yazan kişiye DM üzerinden gönder
+    # 2. Yetkiliye DM üzerinden istediğin görseldeki formatta mesaj gönderilir
     try:
-        dm_embed = discord.Embed(
-            title="📢 Yeni Wipe Duyurusu",
-            description=f"📅 **Tarih:** {tarih_str} {saat_str}\n\n📝 **Duyuru:** {duyuru_metni}",
-            color=0x2b2d31
-        )
+        dm_embed = discord.Embed(color=0x2b2d31)
+        dm_embed.set_author(name="VNT community | Ekip Duyurusu")
+        dm_embed.add_field(name="Gönderen", value=f"{ctx.author.mention} (`{ctx.author.id}`)", inline=False)
+        dm_embed.add_field(name="Tarih", value=f"{tarih_str} {saat_str}", inline=False)
+        dm_embed.add_field(name="Duyuru", value=f"VNT community › <#1543368885569323098> | **{duyuru_metni}**\n\n@here", inline=False)
+        dm_embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1541904408407711747/1546891550431383632/ds.png?ex=6aa16e85&is=6aa01d05&hm=6c35314200b13fc734a0bf41cfb48313f452620b546d28cc312d566e5af92952&")
+        dm_embed.set_footer(text="! VNT • Duyuru")
+        
         await ctx.author.send(embed=dm_embed)
     except:
         await ctx.send("⚠️ Duyuru kanala atıldı ancak size DM gönderilemedi (DM'leriniz kapalı olabilir).")
