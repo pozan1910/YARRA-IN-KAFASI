@@ -310,6 +310,7 @@ async def dmgonder_komutu(ctx, *, duyuru_metni: str = "MAZARETLİ KABUL EDİLMİ
     basarili = 0
     basarisiz = 0
     sabit_logo_url = "https://cdn.discordapp.com/attachments/1541904408407711747/1546891550431383632/ds.png?ex=6aa16e85&is=6aa01d05&hm=6c35314200b13fc734a0bf41cfb48313f452620b546d28cc312d566e5af92952&"
+    kanal_etiket = "<#1543368885569323098>"
 
     for member in ctx.guild.members:
         if member.bot:
@@ -320,7 +321,8 @@ async def dmgonder_komutu(ctx, *, duyuru_metni: str = "MAZARETLİ KABUL EDİLMİ
                 description=f"📢 **{ctx.guild.name} | Ekip Duyurusu**\n\n"
                             f"👤 **Gönderen:** {ctx.author.mention} (`{ctx.author.name}`)\n"
                             f"📅 **Tarih:** {tarih_str} {saat_str}\n\n"
-                            f"🔹 **{ctx.guild.name} › # ingame**  {duyuru_metni}",
+                            f"🔹 **{ctx.guild.name} › {kanal_etiket}  {duyuru_metni}**\n\n"
+                            f"@here",
                 color=0x2b2d31
             )
             
