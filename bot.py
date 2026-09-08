@@ -15,7 +15,7 @@ FFMPEG_PATH = r"C:\ffmpeg\bin\ffmpeg.exe"
 intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
-intents.members = True # Üye isimlerini değiştirmek ve takip etmek için bu intent şarttır!
+intents.members = True # Üye listesini ve rolleri taramak için bu intent zorunludur!
 
 bot = commands.Bot(command_prefix=PREFIX, intents=intents, help_command=None)
 
@@ -97,7 +97,7 @@ class TicketView(discord.ui.View):
 
         existing_channel = discord.utils.get(guild.text_channels, name=f"ticket-{member.name.lower()}")
         if existing_channel:
-            await interaction.response.send_message(f"Zaten açık bir destek talebiniz bulunuyor: {existing_channel.mention}", ephemeral=True)
+            await interaction.response.send_message(f"Zaten açık bir destek talebin bulunuyor: {existing_channel.mention}", ephemeral=True)
             return
 
         overwrites = {
@@ -111,13 +111,13 @@ class TicketView(discord.ui.View):
             topic=f"Destek talebi sahibi: {member.mention}"
         )
 
-        await interaction.response.send_message(f"Destek talebiniz oluşturuldu: {ticket_channel.mention}", ephemeral=True)
+        await interaction.response.send_message(f"Destek talebin oluşturuldu: {ticket_channel.mention}", ephemeral=True)
 
         close_view = TicketCloseView()
         
         embed = discord.Embed(
             title="VNT SUPPORT",
-            description="Destek talebiniz başarıyla açıldı. Lütfen yetkililerin sizinle ilgilenmesini bekleyin.",
+            description="Destek talebin başarıyla açıldı. Lütfen yetkililerin seninle ilgilenmesini bekle.",
             color=0x2b2d31
         )
         await ticket_channel.send(f"{member.mention} hoş geldin!", embed=embed, view=close_view)
@@ -469,26 +469,43 @@ async def dmgonder_komutu(ctx, *, duyuru_metni: str = "MAZARETLİ KABUL EDİLMİ
         await ctx.send(f"❌ Belirtilen ID (`{hedef_kanal_id}`) ile kanal bulunamadı!")
         return
 
+     hedef_rol_id = 1543369236934692944
+    rol = ctx.guild.get_role(hedef_rol_id)
+
+    if not rol:
+        await ctx.send(f"❌ Belirtilen ID (`{hedef_rol_id}`) ile sunucuda bir rol bulunamadı!")
+        return
+
     # 1. WIPE kanalına sadece butonlu ve görev dağılımlı embed gönderilir
     view = WipeGorevView(tarih_str=tarih_str, saat_str=saat_str, duyuru_metni=duyuru_metni, author_display=ctx.author.display_name)
     embed = view.get_embed(ctx.guild.name)
     await kanal.send(embed=embed, view=view)
 
-    # 2. Yetkiliye DM üzerinden istediğin görseldeki formatta mesaj gönderilir
-    try:
-        dm_embed = discord.Embed(color=0x2b2d31)
-        dm_embed.set_author(name="VNT community | Ekip Duyurusu")
-        dm_embed.add_field(name="Gönderen", value=f"{ctx.author.mention} (`{ctx.author.id}`)", inline=False)
-        dm_embed.add_field(name="Tarih", value=f"{tarih_str} {saat_str}", inline=False)
-        dm_embed.add_field(name="Duyuru", value=f"VNT community › <#1543368885569323098> | **{duyuru_metni}**\n\n@here", inline=False)
-        dm_embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1541904408407711747/1546891550431383632/ds.png?ex=6aa16e85&is=6aa01d05&hm=6c35314200b13fc734a0bf41cfb48313f452620b546d28cc312d566e5af92952&")
-        dm_embed.set_footer(text="! VNT • Duyuru")
-        
-        await ctx.author.send(embed=dm_embed)
-    except:
-        await ctx.send("⚠️ Duyuru kanala atıldı ancak size DM gönderilemedi (DM'leriniz kapalı olabilir).")
+    # 2. Belirtilen role sahip olan herkese DM gönderilir
+    await ctx.send(f"⏳ `<@&{hedef_rol_id}>` rolüne sahip kişilere DM'ler gönderiliyor, lütfen bekleyin...")
+    
+    basarili = 0
+    basarisiz = 0
 
-    await ctx.send(f"✅ Duyuru <#{hedef_kanal_id}> kanalına atıldı ve DM bilgisi gönderildi!")
+    for member in rol.members:
+        if member.bot:
+            continue
+        try:
+            dm_embed = discord.Embed(color=0x2b2d31)
+            dm_embed.set_author(name="VNT community | Ekip Duyurusu")
+            dm_embed.add_field(name="Gönderen", value=f"{ctx.author.mention} (`{ctx.author.id}`)", inline=False)
+            dm_embed.add_field(name="Tarih", value=f"{tarih_str} {saat_str}", inline=False)
+            dm_embed.add_field(name="Duyuru", value=f"VNT community › <#1543368885569323098> | **{duyuru_metni}**\n\n@here", inline=False)
+            dm_embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1541904408407711747/1546891550431383632/ds.png?ex=6aa16e85&is=6aa01d05&hm=6c35314200b13fc734a0bf41cfb48313f452620b546d28cc312d566e5af92952&")
+            dm_embed.set_footer(text="! VNT • Duyuru")
+            
+            await member.send(embed=dm_embed)
+            basarili += 1
+            await asyncio.sleep(0.5) # Discord API rate-limit sınırlarına takılmamak için gecikme
+        except:
+            basarisiz += 1
+
+    await ctx.send(f"✅ İşlem tamamlandı!\n- Kanal duyurusu atıldı.\n- Toplam **{basarili}** kişiye DM gönderildi. (Ulaşılamayan: {basarisiz})")
 
 
 @bot.command(name="CLEAR", aliases=["clear", "sil", "clean"])
