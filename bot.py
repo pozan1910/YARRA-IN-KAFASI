@@ -134,7 +134,7 @@ async def on_ready():
 
 class WipeGorevView(discord.ui.View):
     def __init__(self, tarih_str="", saat_str="", duyuru_metni="", author_display=""):
-        super().__init__(timeout=None) # Timeout kaldırıldı, interaction failed hataları önlendi
+        super().__init__(timeout=None)
         self.tarih_str = tarih_str
         self.saat_str = saat_str
         self.duyuru_metni = duyuru_metni
@@ -188,7 +188,7 @@ class WipeGorevView(discord.ui.View):
 
     @discord.ui.button(label="Builder (0/2)", style=discord.ButtonStyle.primary, custom_id="gorev_builder")
     async def builder_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer() # Uygulama yanıt vermedi hatasını önler
+        await interaction.response.defer()
         uid = interaction.user.id
         if uid in self.builder_users:
             self.builder_users.remove(uid)
@@ -437,7 +437,7 @@ async def ticketkur_komutu(ctx):
         pass
 
 
-# ==================== DUYURU & GÖREV SİSTEMİ (KANALA GÖNDERME) ====================
+# ==================== DUYURU & GÖREV SİSTEMİ (DM + KANAL) ====================
 
 @bot.command(name="DMGÖNDER", aliases=["dmgonder", "dm"])
 @commands.has_permissions(administrator=True)
@@ -471,11 +471,24 @@ async def dmgonder_komutu(ctx, *, duyuru_metni: str = "MAZARETLİ KABUL EDİLMİ
         await ctx.send(f"❌ Belirtilen ID (`{hedef_kanal_id}`) ile kanal bulunamadı!")
         return
 
+    # 1. Rol seçme mesajını WIPE kanalına butonlarla gönder
     view = WipeGorevView(tarih_str=tarih_str, saat_str=saat_str, duyuru_metni=duyuru_metni, author_display=ctx.author.display_name)
     embed = view.get_embed(ctx.guild.name)
 
     await kanal.send(embed=embed, view=view)
-    await ctx.send(f"✅ Duyuru başarıyla <#{hedef_kanal_id}> kanalına gönderildi!")
+
+    # 2. Duyuru metnini komutu yazan kişiye DM üzerinden gönder
+    try:
+        dm_embed = discord.Embed(
+            title="📢 Yeni Wipe Duyurusu",
+            description=f"📅 **Tarih:** {tarih_str} {saat_str}\n\n📝 **Duyuru:** {duyuru_metni}",
+            color=0x2b2d31
+        )
+        await ctx.author.send(embed=dm_embed)
+    except:
+        await ctx.send("⚠️ Duyuru kanala atıldı ancak size DM gönderilemedi (DM'leriniz kapalı olabilir).")
+
+    await ctx.send(f"✅ Duyuru <#{hedef_kanal_id}> kanalına atıldı ve DM bilgisi gönderildi!")
 
 
 @bot.command(name="CLEAR", aliases=["clear", "sil", "clean"])
