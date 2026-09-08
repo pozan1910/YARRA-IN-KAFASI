@@ -469,7 +469,7 @@ async def dmgonder_komutu(ctx, *, duyuru_metni: str = "MAZARETLİ KABUL EDİLMİ
         await ctx.send(f"❌ Belirtilen ID (`{hedef_kanal_id}`) ile kanal bulunamadı!")
         return
 
-     hedef_rol_id = 1543369236934692944
+    hedef_rol_id = 1543369236934692944
     rol = ctx.guild.get_role(hedef_rol_id)
 
     if not rol:
@@ -501,7 +501,7 @@ async def dmgonder_komutu(ctx, *, duyuru_metni: str = "MAZARETLİ KABUL EDİLMİ
             
             await member.send(embed=dm_embed)
             basarili += 1
-            await asyncio.sleep(0.5) # Discord API rate-limit sınırlarına takılmamak için gecikme
+            await asyncio.sleep(0.5) 
         except:
             basarisiz += 1
 
