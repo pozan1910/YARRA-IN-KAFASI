@@ -14,7 +14,7 @@ SAHIP_ID = 1212794484035821628
 # FFmpeg yolunuzu ayarlayın
 FFMPEG_PATH = r"C:\ffmpeg\bin\ffmpeg.exe"
 
-# Intent Ayarları (Bot ekleme tespiti için audit log entegrasyonu adına guilds ve members şarttır)
+# Intent Ayarları
 intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
@@ -295,16 +295,12 @@ class WipeGorevView(discord.ui.View):
 
 @bot.event
 async def on_member_join(member):
-    # Eğer katılan üye bir bot ise
     if member.bot:
         try:
-            # Audit logları tarayarak bu botu sunucuya kimin eklediğini buluyoruz
-            await asyncio.sleep(1) # Logların düşmesi için kısa bir gecikme
+            await asyncio.sleep(1)
             async for entry in member.guild.audit_logs(action=discord.AuditLogAction.bot_add, limit=5):
                 if entry.target.id == member.id:
                     ekleyen = entry.user
-                    
-                    # Eğer ekleyen kişi sen (SAHIP_ID) değilsen botu hemen at ve yetkiyi sorgula
                     if ekleyen.id != SAHIP_ID:
                         await member.guild.kick(member, reason="İzinsiz bot eklendi! Sadece sunucu sahibi bot ekleyebilir.")
                         try:
@@ -316,7 +312,6 @@ async def on_member_join(member):
         except Exception as e:
             print(f"Bot koruma hatası: {e}")
 
-    # Mevcut Oto Rol ve Tag Sistemi devam ediyor
     if member.bot:
         return
 
@@ -468,9 +463,6 @@ async def ticketkur_komutu(ctx):
 @bot.command(name="DMGÖNDER", aliases=["dmgonder", "dm"])
 @commands.has_permissions(administrator=True)
 async def dmgonder_komutu(ctx, *, duyuru_metni: str = "MAZARETLİ KABUL EDİLMİYECEKTİR TIKLE"):
-    """
-    Kullanım: !dmgonder Verilecek Duyuru Metni
-    """
     def check(m):
         return m.author == ctx.author and m.channel == ctx.channel
 
@@ -504,12 +496,10 @@ async def dmgonder_komutu(ctx, *, duyuru_metni: str = "MAZARETLİ KABUL EDİLMİ
         await ctx.send(f"❌ Belirtilen ID (`{hedef_rol_id}`) ile sunucuda bir rol bulunamadı!")
         return
 
-    # 1. WIPE kanalına butonlu ve görev dağılımlı embed gönderilir
     view = WipeGorevView(tarih_str=tarih_str, saat_str=saat_str, duyuru_metni=duyuru_metni, author_display=ctx.author.display_name)
     embed = view.get_embed(ctx.guild.name)
     await kanal.send(embed=embed, view=view)
 
-    # 2. Belirtilen role sahip olan herkese DM gönderilir (Butonsuz, kanal etiketli)
     await ctx.send(f"⏳ `<@&{hedef_rol_id}>` rolüne sahip kişilere DM'ler gönderiliyor, lütfen bekleyin...")
     
     basarili = 0
@@ -590,10 +580,6 @@ async def unmute_komutu(ctx):
 # ==================== MÜZİK KOMUTLARI ====================
 
 @bot.command(name="PLAY", aliases=["play", "oynat", "p"])
-async def play(ctx, *, search: str::str): # type: ignore
-    pass
-
-@bot.command(name="PLAY_REAL", aliases=["play_ gercek"])
 async def play(ctx, *, search: str):
     if not ctx.author.voice:
         await ctx.reply("❌ Önce bir ses kanalına katılmalısın! 🔊", delete_after=5)
@@ -604,7 +590,7 @@ async def play(ctx, *, search: str):
     if ctx.voice_client is None:
         await channel.connect()
     elif ctx.voice_client.channel != channel:
-        await ctx.voice_client.move_to(channel)
+        await ctx.voice_client.move_play = await ctx.voice_client.move_to(channel) # type: ignore
 
     async with ctx.typing():
         try:
