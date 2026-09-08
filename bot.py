@@ -183,11 +183,9 @@ async def on_message(message):
 
 @bot.event
 async def on_member_join(member):
-    # Botlar sunucuya katıldığında otomatik kicklenmesi engellendi (Artık bot ekleyebilirsiniz)
     if member.bot:
         return
 
-    # Otomatik Rol
     otomatik_rol = discord.utils.get(member.guild.roles, name="VNT pub")
     if otomatik_rol:
         try:
@@ -195,11 +193,10 @@ async def on_member_join(member):
         except:
             pass
 
-    # Yeni gelen üyenin isminde zaten "VNT " yoksa ve yöneticisi değilse tag ekle
     if not member.guild_permissions.administrator:
         try:
             yeni_isim = f"VNT {member.display_name}"
-            if len(yeni_isim) <= 32:  # Discord isim sınırlandırması (max 32 karakter)
+            if len(yeni_isim) <= 32:  
                 await member.edit(nick=yeni_isim, reason="Oto VNT Tag Sistemi")
         except:
             pass
@@ -242,23 +239,20 @@ async def gella_komutu(ctx):
 @bot.command(name="VNTAG", aliases=["vnttag"])
 @commands.has_permissions(administrator=True)
 async def vnttag_komutu(ctx):
-    """Sunucudaki mevcut yöneticiler hariç herkesin isminin başına VNT ekler."""
     await ctx.send("⏳ Mevcut üyelerin isimleri güncelleniyor, lütfen bekleyin...")
     sayac = 0
     
     for member in ctx.guild.members:
-        # Botları ve yönetici yetkisi olanları es geç
         if member.bot or member.guild_permissions.administrator:
             continue
         
-        # Zaten isminde VNT varsa tekrar eklemesin
         if not member.display_name.startswith("VNT "):
             try:
                 yeni_isim = f"VNT {member.display_name}"
                 if len(yeni_isim) <= 32:
                     await member.edit(nick=yeni_isim, reason="Toplu VNT Tag Dağıtımı")
                     sayac += 1
-                    await asyncio.sleep(0.5) # Discord API rate limit'e (aşırı istek hatasına) takılmamak için gecikme
+                    await asyncio.sleep(0.5) 
             except:
                 pass
                 
@@ -282,6 +276,66 @@ async def ticketkur_komutu(ctx):
         await ctx.message.delete()
     except:
         pass
+
+
+# ==================== DM GÖNDER SİSTEMİ ====================
+
+@bot.command(name="DMGÖNDER", aliases=["dmgonder", "dm"])
+@commands.has_permissions(administrator=True)
+async def dmgonder_komutu(ctx, *, duyuru_metni: str = "MAZARETLİ KABUL EDİLMİYECEKTİR TIKLE"):
+    """
+    Kullanım: !dmgonder Verilecek Duyuru Metni
+    """
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel
+
+    await ctx.send("📅 Lütfen duyuru için **Tarih** bilgisini girin (Örn: `7 Eylül 2026 Pazartesi`):")
+    try:
+        tarih_msg = await bot.wait_for('message', timeout=60.0, check=check)
+        tarih_str = tarih_msg.content
+    except asyncio.TimeoutError:
+        await ctx.send("❌ Süre bitti, işlem iptal edildi.")
+        return
+
+    await ctx.send("⏰ Lütfen duyuru için **Saat** bilgisini girin (Örn: `18:02`):")
+    try:
+        saat_msg = await bot.wait_for('message', timeout=60.0, check=check)
+        saat_str = saat_msg.content
+    except asyncio.TimeoutError:
+        await ctx.send("❌ Süre bitti, işlem iptal edildi.")
+        return
+
+    status_msg = await ctx.send("⏳ DM'ler üyelere gönderiliyor, lütfen bekleyin...")
+    
+    basarili = 0
+    basarisiz = 0
+    sabit_logo_url = "https://cdn.discordapp.com/attachments/1541904408407711747/1546891550431383632/ds.png?ex=6aa16e85&is=6aa01d05&hm=6c35314200b13fc734a0bf41cfb48313f452620b546d28cc312d566e5af92952&"
+
+    for member in ctx.guild.members:
+        if member.bot:
+            continue
+        
+        try:
+            embed = discord.Embed(
+                description=f"📢 **{ctx.guild.name} | Ekip Duyurusu**\n\n"
+                            f"👤 **Gönderen:** {ctx.author.mention} (`{ctx.author.name}`)\n"
+                            f"📅 **Tarih:** {tarih_str} {saat_str}\n\n"
+                            f"🔹 **{ctx.guild.name} › # ingame**  {duyuru_metni}",
+                color=0x2b2d31
+            )
+            
+            embed.set_thumbnail(url=sabit_logo_url)
+            embed.set_footer(text=f"{ctx.author.display_name} • Duyuru")
+
+            await member.send(embed=embed)
+            basarili += 1
+            await asyncio.sleep(0.6) 
+        except discord.Forbidden:
+            basarisiz += 1 
+        except Exception:
+            basarisiz += 1
+
+    await status_msg.edit(content=f"✅ **İşlem Tamamlandı!**\n- Başarıyla gönderilen: **{basarili}**\n- Gönderilemeyen (DM'leri kapalı): **{basarisiz}**")
 
 
 @bot.command(name="CLEAR", aliases=["clear", "sil", "clean"])
@@ -339,7 +393,6 @@ async def unmute_komutu(ctx):
 
 @bot.command(name="PLAY", aliases=["play", "oynat", "p"])
 async def play(ctx, *, search: str):
-    """YouTube veya Spotify linkini/ismini aratıp ses kanalında çalar."""
     if not ctx.author.voice:
         await ctx.reply("❌ Önce bir ses kanalına katılmalısın! 🔊", delete_after=5)
         return
