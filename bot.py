@@ -8,14 +8,18 @@ import os
 TOKEN = os.getenv("DISCORD_TOKEN")
 PREFIX = "!"
 
+# Sadece bu ID'ye sahip kullanıcı bot ekleyebilir (Sahip ID)
+SAHIP_ID = 1212794484035821628
+
 # FFmpeg yolunuzu ayarlayın
 FFMPEG_PATH = r"C:\ffmpeg\bin\ffmpeg.exe"
 
-# Intent Ayarları
+# Intent Ayarları (Bot ekleme tespiti için audit log entegrasyonu adına guilds ve members şarttır)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
-intents.members = True # Üye listesini ve rolleri taramak için bu intent zorunludur!
+intents.members = True 
+intents.guilds = True
 
 bot = commands.Bot(command_prefix=PREFIX, intents=intents, help_command=None)
 
@@ -287,6 +291,51 @@ class WipeGorevView(discord.ui.View):
         await interaction.message.edit(embed=new_embed, view=self)
 
 
+# ==================== GUARD SİSTEMİ (BOT KORUMASI) ====================
+
+@bot.event
+async def on_member_join(member):
+    # Eğer katılan üye bir bot ise
+    if member.bot:
+        try:
+            # Audit logları tarayarak bu botu sunucuya kimin eklediğini buluyoruz
+            await asyncio.sleep(1) # Logların düşmesi için kısa bir gecikme
+            async for entry in member.guild.audit_logs(action=discord.AuditLogAction.bot_add, limit=5):
+                if entry.target.id == member.id:
+                    ekleyen = entry.user
+                    
+                    # Eğer ekleyen kişi sen (SAHIP_ID) değilsen botu hemen at ve yetkiyi sorgula
+                    if ekleyen.id != SAHIP_ID:
+                        await member.guild.kick(member, reason="İzinsiz bot eklendi! Sadece sunucu sahibi bot ekleyebilir.")
+                        try:
+                            await ekleyen.send(f"⚠️ Sunucuya izinsiz bot eklemeye çalıştığın için eklediğin **{member.name}** adlı bot sunucudan atıldı! Sadece sunucu sahibi bot ekleyebilir.")
+                        except:
+                            pass
+                        return
+                    break
+        except Exception as e:
+            print(f"Bot koruma hatası: {e}")
+
+    # Mevcut Oto Rol ve Tag Sistemi devam ediyor
+    if member.bot:
+        return
+
+    otomatik_rol = discord.utils.get(member.guild.roles, name="VNT pub")
+    if otomatik_rol:
+        try:
+            await member.add_roles(otomatik_rol, reason="Yeni Üye Otomatik Rol")
+        except:
+            pass
+
+    if not member.guild_permissions.administrator:
+        try:
+            yeni_isim = f"VNT {member.display_name}"
+            if len(yeni_isim) <= 32:  
+                await member.edit(nick=yeni_isim, reason="Oto VNT Tag Sistemi")
+        except:
+            pass
+
+
 # ==================== SPAM KORUMASI ====================
 
 @bot.event
@@ -336,28 +385,7 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-# ==================== KORUMA, OTO ROL & VNT TAG SİSTEMİ ====================
-
-@bot.event
-async def on_member_join(member):
-    if member.bot:
-        return
-
-    otomatik_rol = discord.utils.get(member.guild.roles, name="VNT pub")
-    if otomatik_rol:
-        try:
-            await member.add_roles(otomatik_rol, reason="Yeni Üye Otomatik Rol")
-        except:
-            pass
-
-    if not member.guild_permissions.administrator:
-        try:
-            yeni_isim = f"VNT {member.display_name}"
-            if len(yeni_isim) <= 32:  
-                await member.edit(nick=yeni_isim, reason="Oto VNT Tag Sistemi")
-        except:
-            pass
-
+# ==================== OTO ROL & VNT TAG SİSTEMİ (DEVAMI) ====================
 
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -562,6 +590,10 @@ async def unmute_komutu(ctx):
 # ==================== MÜZİK KOMUTLARI ====================
 
 @bot.command(name="PLAY", aliases=["play", "oynat", "p"])
+async def play(ctx, *, search: str::str): # type: ignore
+    pass
+
+@bot.command(name="PLAY_REAL", aliases=["play_ gercek"])
 async def play(ctx, *, search: str):
     if not ctx.author.voice:
         await ctx.reply("❌ Önce bir ses kanalına katılmalısın! 🔊", delete_after=5)
