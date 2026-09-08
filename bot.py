@@ -130,6 +130,185 @@ async def on_ready():
     bot.add_view(TicketCloseView())
 
 
+# ==================== WIPE GÖREV SEÇİM SİSTEMİ VIEW ====================
+
+class WipeGorevView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        # Görevleri seçen kullanıcı ID'lerini tutan listeler
+        self.builder_users = []
+        self.farmer_users = []
+        self.roamer_users = []
+        self.electric_users = []
+        self.endustriyel_users = []
+
+    def update_labels(self):
+        self.builder_btn.label = f"Builder ({len(self.builder_users)}/2)"
+        self.farmer_btn.label = f"Farmer ({len(self.farmer_users)})"
+        self.roamer_btn.label = f"Roamer ({len(self.roamer_users)}/6)"
+        self.electric_btn.label = f"Electric ({len(self.electric_users)}/1)"
+        self.endustriyel_btn.label = f"Endüstriyel ({len(self.endustriyel_users)}/1)"
+
+    def get_embed(self, tarih_str, saat_str, duyuru_metni, guild_name):
+        b_list = ", ".join([f"<@{uid}>" for uid in self.builder_users]) or "Seçen yok"
+        f_list = ", ".join([f"<@{uid}>" for uid in self.farmer_users]) or "Seçen yok"
+        r_list = ", ".join([f"<@{uid}>" for uid in self.roamer_users]) or "Seçen yok"
+        e_list = ", ".join([f"<@{uid}>" for uid in self.electric_users]) or "Seçen yok"
+        en_list = ", ".join([f"<@{uid}>" for uid in self.endustriyel_users]) or "Seçen yok"
+
+        kanal_etiket = "<#1543368885569323098>"
+        desc = (
+            f"📢 **{guild_name} | Ekip Duyurusu**\n\n"
+            f"📅 **Tarih:** {tarih_str} {saat_str}\n\n"
+            f"🔹 **{guild_name} › {kanal_etiket}  {duyuru_metni}**\n\n"
+            f"🛠️ **GÖREV DAĞILIMI:**\n"
+            f"🧱 **Builder (Max 2):** {b_list}\n"
+            f"⛏️ **Farmer (Sınırsız):** {f_list}\n"
+            f"🔫 **Roamer (Max 6):** {r_list}\n"
+            f"⚡ **Electric (Max 1):** {e_list}\n"
+            f"⚙️ **Endüstriyel (Max 1):** {en_list}\n\n"
+            f"@here"
+        )
+        embed = discord.Embed(description=desc, color=0x2b2d31)
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1541904408407711747/1546891550431383632/ds.png?ex=6aa16e85&is=6aa01d05&hm=6c35314200b13fc734a0bf41cfb48313f452620b546d28cc312d566e5af92952&")
+        return embed
+
+    def user_has_role(self, uid):
+        return (uid in self.builder_users or 
+                uid in self.farmer_users or 
+                uid in self.roamer_users or 
+                uid in self.electric_users or 
+                uid in self.endustriyel_users)
+
+    @discord.ui.button(label="Builder (0/2)", style=discord.ButtonStyle.primary, custom_id="gorev_builder")
+    async def builder_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        uid = interaction.user.id
+        if uid in self.builder_users:
+            self.builder_users.remove(uid)
+            await interaction.response.send_message("❌ Builder görevinden ayrıldın.", ephemeral=True)
+        else:
+            if len(self.builder_users) >= 2:
+                await interaction.2response.send_message("❌ Builder kadrosu dolu (Max 2 kişi)!", ephemeral=True)
+                return
+            if self.user_has_role(uid):
+                await interaction.response.send_message("❌ Zaten başka bir görev seçmişsin! Öncekini bırakmalısın.", ephemeral=True)
+                return
+            self.builder_users.append(uid)
+            await interaction.response.send_message("✅ Builder görevini seçtin!", ephemeral=True)
+        
+        self.update_labels()
+        await interaction.message.edit(view=self, embed=interaction.message.embeds[0].from_dict(interaction.message.embeds[0].to_dict()) if False else interaction.message.embeds[0])
+
+    @discord.ui.button(label="Farmer (0)", style=discord.ButtonStyle.success, custom_id="gorev_farmer")
+    async def farmer_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        uid = interaction.user.id
+        if uid in self.farmer_users:
+            self.farmer_users.remove(uid)
+            await interaction.response.send_message("❌ Farmer görevinden ayrıldın.", ephemeral=True)
+        else:
+            if self.user_has_role(uid):
+                await interaction.response.send_message("❌ Zaten başka bir görev seçmişsin!", ephemeral=True)
+                return
+            self.farmer_users.append(uid)
+            await interaction.response.send_message("✅ Farmer görevini seçtin!", ephemeral=True)
+        
+        self.update_labels()
+        await interaction.message.edit(view=self)
+
+    @discord.ui.button(label="Roamer (0/6)", style=discord.ButtonStyle.danger, custom_id="gorev_roamer")
+    async def roamer_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        uid = interaction.user.id
+        if uid in self.roamer_users:
+            self.roamer_users.remove(uid)
+            await interaction.response.send_message("❌ Roamer görevinden ayrıldın.", ephemeral=True)
+        else:
+            if len(self.roamer_users) >= 6:
+                await interaction.response.send_message("❌ Roamer kadrosu dolu (Max 6 kişi)!", ephemeral=True)
+                return
+            if self.user_has_role(uid):
+                await interaction.response.send_message("❌ Zaten başka bir görev seçmişsin!", ephemeral=True)
+                return
+            self.roamer_users.append(uid)
+            await interaction.response.send_message("✅ Roamer görevini seçtin!", ephemeral=True)
+        
+        self.update_labels()
+        await interaction.message.edit(view=self)
+
+    @discord.ui.button(label="Electric (0/1)", style=discord.ButtonStyle.secondary, custom_id="gorev_electric")
+    async def electric_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        uid = interaction.user.id
+        if uid in self.electric_users:
+            self.electric_users.remove(uid)
+            await interaction.response.send_message("❌ Electric görevinden ayrıldın.", ephemeral=True)
+        else:
+            if len(self.electric_users) >= 1:
+                await interaction.response.send_message("❌ Electric kadrosu dolu (Max 1 kişi)!", ephemeral=True)
+                return
+            if self.user_has_role(uid):
+                await interaction.response.send_message("❌ Zaten başka bir görev seçmişsin!", ephemeral=True)
+                return
+            self.electric_users.append(uid)
+            await interaction.response.send_message("✅ Electric görevini seçtin!", ephemeral=True)
+        
+        self.update_labels()
+        await interaction.message.edit(view=self)
+
+    @discord.ui.button(label="Endüstriyel (0/1)", style=discord.ButtonStyle.secondary, custom_id="gorev_endustriyel")
+    async def endustriyel_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        uid = interaction.user.id
+        if uid in self.endustriyel_users:
+            self.endustriyel_users.remove(uid)
+            await interaction.response.send_message("❌ Endüstriyel görevinden ayrıldın.", ephemeral=True)
+        else:
+            if len(self.endustriyel_users) >= 1:
+                await interaction.response.send_message("❌ Endüstriyel kadrosu dolu (Max 1 kişi)!", ephemeral=True)
+                return
+            if self.user_has_role(uid):
+                await interaction.response.send_message("❌ Zaten başka bir görev seçmişsin!", ephemeral=True)
+                return
+            self.endustriyel_users.append(uid)
+            await interaction.response.send_message("✅ Endüstriyel görevini seçtin!", ephemeral=True)
+        
+        self.update_labels()
+        await interaction.message.edit(view=self)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        # Mesajı güncelleyen buton tıklamalarından sonra embed içeriğini de güncelleyelim
+        # (Butona basıldığında embed içindeki isim listeleri anlık güncellensin diye)
+        guild_name = interaction.guild.name
+        # Bu kısımdaki tarih verilerini view içinde tutabiliriz ya da dinamik güncelleyebiliriz:
+        b_list = ", ".join([f"<@{uid}>" for uid in self.builder_users]) or "Seçen yok"
+        f_list = ", ".join([f"<@{uid}>" for uid in self.farmer_users]) or "Seçen yok"
+        r_list = ", ".join([f"<@{uid}>" for uid in self.roamer_users]) or "Seçen yok"
+        e_list = ", ".join([f"<@{uid}>" for uid in self.electric_users]) or "Seçen yok"
+        en_list = ", ".join([f"<@{uid}>" for uid in self.endustriyel_users]) or "Seçen yok"
+
+        old_embed = interaction.message.embeds[0]
+        # Eski embed description'ından tarih kısmını korumak için satırları parçalayabiliriz
+        lines = old_embed.description.split("\n")
+        tarih_satir = lines[2] if len(lines) > 2 else ""
+        duyuru_satir = lines[4] if len(lines) > 4 else ""
+
+        desc = (
+            f"📢 **{guild_name} | Ekip Duyurusu**\n\n"
+            f"{tarih_satir}\n\n"
+            f"{duyuru_satir}\n\n"
+            f"🛠️ **GÖREV DAĞILIMI:**\n"
+            f"🧱 **Builder (Max 2):** {b_list}\n"
+            f"⛏️ **Farmer (Sınırsız):** {f_list}\n"
+            f"🔫 **Roamer (Max 6):** {r_list}\n"
+            f"⚡ **Electric (Max 1):** {e_list}\n"
+            f"⚙️ **Endüstriyel (Max 1):** {en_list}\n\n"
+            f"@here"
+        )
+        new_embed = discord.Embed(description=desc, color=0x2b2d31)
+        new_embed.set_thumbnail(url=old_embed.thumbnail.url)
+        new_embed.set_footer(text=old_embed.footer.text)
+        
+        await interaction.message.edit(embed=new_embed, view=self)
+        return True
+
+
 # ==================== SPAM KORUMASI ====================
 
 @bot.event
@@ -278,7 +457,7 @@ async def ticketkur_komutu(ctx):
         pass
 
 
-# ==================== DM GÖNDER SİSTEMİ ====================
+# ==================== DM GÖNDER & GÖREV SİSTEMİ ====================
 
 @bot.command(name="DMGÖNDER", aliases=["dmgonder", "dm"])
 @commands.has_permissions(administrator=True)
@@ -317,19 +496,12 @@ async def dmgonder_komutu(ctx, *, duyuru_metni: str = "MAZARETLİ KABUL EDİLMİ
             continue
         
         try:
-            embed = discord.Embed(
-                description=f"📢 **{ctx.guild.name} | Ekip Duyurusu**\n\n"
-                            f"👤 **Gönderen:** {ctx.author.mention} (`{ctx.author.name}`)\n"
-                            f"📅 **Tarih:** {tarih_str} {saat_str}\n\n"
-                            f"🔹 **{ctx.guild.name} › {kanal_etiket}  {duyuru_metni}**\n\n"
-                            f"@here",
-                color=0x2b2d31
-            )
-            
-            embed.set_thumbnail(url=sabit_logo_url)
+            # Her kullanıcıya özel görev seçimi paneli oluşturulur
+            view = WipeGorevView()
+            embed = view.get_embed(tarih_str, saat_str, duyuru_metni, ctx.guild.name)
             embed.set_footer(text=f"{ctx.author.display_name} • Duyuru")
 
-            await member.send(embed=embed)
+            await member.send(embed=embed, view=view)
             basarili += 1
             await asyncio.sleep(0.6) 
         except discord.Forbidden:
